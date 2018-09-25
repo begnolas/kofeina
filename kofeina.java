@@ -1,0 +1,196 @@
+
+import java.awt.AWTException;
+import java.awt.HeadlessException;
+import java.awt.Image;
+import java.awt.MenuItem;
+import java.awt.MouseInfo;
+import java.awt.Point;
+import java.awt.PointerInfo;
+import java.awt.PopupMenu;
+import java.awt.Robot;
+import java.awt.SystemTray;
+import java.awt.TrayIcon;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.net.URL;
+import java.util.concurrent.ThreadLocalRandom;
+
+import javax.swing.ImageIcon;
+import javax.swing.SwingUtilities;
+import javax.swing.UIManager;
+import javax.swing.UnsupportedLookAndFeelException;
+
+public class kofeina {
+	static Thread one, supervisor;
+
+	public static void main(String[] args) throws ClassNotFoundException, InstantiationException,
+			IllegalAccessException, UnsupportedLookAndFeelException {
+		UIManager.setLookAndFeel("com.sun.java.swing.plaf.windows.WindowsLookAndFeel");
+		UIManager.put("swing.boldMetal", Boolean.FALSE);
+
+		SwingUtilities.invokeLater(new Runnable() {
+			@Override
+			public void run() {
+				try {
+					createAndShowGUI();
+				} catch (AWTException e) {
+					e.printStackTrace();
+				}
+			}
+		});
+
+		one = new Thread() {
+			@Override
+			public void run() {
+				System.out.println("One: start.");
+				logic();
+			}
+		};
+		one.start();
+
+		supervisor = new Thread() {
+			@Override
+			public void run() {
+				try {
+					Thread.State oldState = one.getState();
+					System.out.println("Supervisor: Start.");
+
+					while (true) {
+						Thread.State newState = one.getState();
+
+						if (oldState != newState) {
+							System.out.println("Supervisor: status changed from " + oldState + " to: " + newState);
+						}
+
+						oldState = newState;
+						Thread.sleep(1000);
+					}
+				} catch (InterruptedException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+
+			}
+		};
+		supervisor.start();
+
+	}
+
+	private static void createAndShowGUI() throws AWTException {
+		if (!SystemTray.isSupported()) {
+			System.out.println("SystemTray is not supported");
+			return;
+		}
+
+		final PopupMenu popup = new PopupMenu();
+		final TrayIcon trayIcon = new TrayIcon(createImage("bulb.gif", "tray icon"));
+		final SystemTray tray = SystemTray.getSystemTray();
+
+		// Create a popup menu components
+		MenuItem startItem = new MenuItem("Start");
+		// popup.add(startItem);
+
+		MenuItem stopItem = new MenuItem("Stop");
+		// popup.add(stopItem);
+
+		MenuItem exitItem = new MenuItem("Exit");
+		popup.add(exitItem);
+
+		trayIcon.setPopupMenu(popup);
+		tray.add(trayIcon);
+
+		// ActionListener
+		exitItem.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				tray.remove(trayIcon);
+				System.exit(0);
+			}
+		});
+
+		startItem.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				one.start();
+			}
+		});
+
+		stopItem.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				System.out.println("Stop.");
+			}
+		});
+	}
+
+	// Obtain the image URL
+	protected static Image createImage(String path, String description) {
+		URL imageURL = kofeina.class.getResource(path);
+
+		if (imageURL == null) {
+			System.err.println("Resource not found: " + path);
+			return null;
+		} else {
+			return (new ImageIcon(imageURL, description)).getImage();
+		}
+	}
+
+	static void logic() {
+
+		int move_steps1 = 0;
+		int move_steps2 = 0;
+		int oldx = 0;
+		int oldy = 0;
+		int counter = 0;
+		int counterP = 30;
+		PointerInfo a;
+		Robot hal;
+
+		while (true) {
+
+			try {
+				hal = new Robot();
+
+				a = MouseInfo.getPointerInfo();
+
+				Point b = a.getLocation();
+
+				int x = (int) b.getX();
+				int y = (int) b.getY();
+
+				if ((Math.abs(x - oldx) < 10) && (Math.abs(y - oldy) < 10)) {
+					counter++;
+				} else {
+					counter = 0;
+				}
+
+				if (counter > counterP) {
+					move_steps1 = ThreadLocalRandom.current().nextInt(-9, 9 + 1);
+					move_steps2 = ThreadLocalRandom.current().nextInt(-9, 9 + 1);
+
+					hal.mouseMove((x + move_steps1), (y + move_steps2));
+				}
+
+				oldx = x;
+				oldy = y;
+
+				// System.out.print("*");
+
+			} catch (AWTException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			} catch (HeadlessException e) {
+				e.printStackTrace();
+			} catch (NullPointerException e) {
+				e.printStackTrace();
+			}
+
+			try {
+				Thread.sleep(5000);
+			} catch (InterruptedException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}
+	}
+}
