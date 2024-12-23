@@ -22,7 +22,7 @@
                 <configuration>
                     <archive>
                         <manifest>
-                            <mainClass>com.painfulstaff.Kofeina.Main</mainClass>
+                            <mainClass>com.painfulstaff.Kofeina</mainClass>
                         </manifest>
                     </archive>
                 </configuration>
