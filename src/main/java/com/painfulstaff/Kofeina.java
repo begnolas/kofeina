@@ -1,69 +1,28 @@
 package com.painfulstaff;
 
 import java.awt.AWTException;
-import java.awt.Robot;
-import java.awt.event.KeyEvent;
+import java.awt.SystemTray;
 
-import javax.swing.UnsupportedLookAndFeelException;
 
 public class Kofeina {
 
-    static Thread supervisor;
-    static Logic one;
+    static SupervisorThread supervisor;
+    static LogicThread logicThread;
+    static GuiThread gui;
 
-    public static void main(String[] args) throws AWTException, ClassNotFoundException, InstantiationException, IllegalAccessException, UnsupportedLookAndFeelException {
+    public static void main(String[] args) throws AWTException, ClassNotFoundException, InstantiationException, IllegalAccessException {
+        if (!SystemTray.isSupported()) {
+            System.out.println("SystemTray is not supported");
+            System.exit(0);
+        }
 
-        Gui gui = new Gui();
-        
+        logicThread = new LogicThread();
+        logicThread.start();
 
-        one = new Logic();
-        one.start();
-
-
-
-
-        supervisor = new Thread() {
-            @Override
-            public void run() {
-                try {
-                    System.out.println("Supervisor: Start.");
-
-                    Thread.State oldState = one.getState();
-
-                    while (true) {
-                        Thread.State newState = one.getState();
-
-                        if (oldState != newState) {
-                            System.out.println("Supervisor: one status changed from " + oldState + " to: " + newState);
-                        }
-
-                        oldState = newState;
-                        Thread.sleep(1000);
-
-                    }
-
-                } catch (InterruptedException e) {
-                    // TODO Auto-generated catch block
-                    e.printStackTrace();
-                }
-
-            }
-        };
+        supervisor = new SupervisorThread(logicThread);
         supervisor.start();
 
-
-    }
-
- 
-
-    static void LockScreen() throws AWTException {
-        Robot robot = new Robot();
-
-        robot.keyPress(KeyEvent.VK_WINDOWS + KeyEvent.VK_L);
-        robot.delay(200);
-        //robot.keyPress(KeyEvent.VK_L);
-
-        robot.keyRelease(KeyEvent.VK_L);
-        robot.keyRelease(KeyEvent.VK_WINDOWS);
+        gui = new GuiThread(logicThread);
+        gui.start();
     }
 }
