@@ -1,6 +1,7 @@
 # kofeina
 
 
-
-`mvnw clean install
-`java -jar kofeina-1.0.jar
+```bash
+mvnw clean install
+java -jar kofeina-1.0.jar
+```
